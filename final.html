@@ -1,0 +1,255 @@
+<html>
+    <head>
+        <script src="https://hosted.paysafe.com/checkout/v2/paysafe.checkout.min.js"></script>
+        <!-- <script data-main = "scripts/main" src = "scripts/require.js"></script> -->
+        <!-- <script src="https://unpkg.com/axios/dist/axios.min.js"></script> -->
+        <style>
+            body {
+              font-family: Arial, Helvetica, sans-serif;
+              background-color: black;
+            }
+            
+            * {
+              box-sizing: border-box;
+            }
+            
+            .container {
+              padding: 16px;
+              background-color: white;
+            }
+            
+            input[type=text]{
+              width: 100%;
+              padding: 15px;
+              margin: 5px 0 22px 0;
+              display: inline-block;
+              border: none;
+              background: #f1f1f1;
+            }
+            
+            input[type=text]:focus, input[type=password]:focus {
+              background-color: #ddd;
+              outline: none;
+            }
+            
+            hr {
+              border: 1px solid #f1f1f1;
+              margin-bottom: 25px;
+            }
+            
+            .registerbtn {
+              background-color: #4CAF50;
+              color: white;
+              padding: 16px 20px;
+              margin: 8px 0;
+              border: none;
+              cursor: pointer;
+              width: 100%;
+              opacity: 0.9;
+            }
+            
+            .registerbtn:hover {
+              opacity: 1;
+            }
+            
+            a {
+              color: dodgerblue;
+            }
+            
+            .signin {
+              background-color: #f1f1f1;
+              text-align: center;
+            }
+            </style>
+            
+    </head>
+
+ 
+    <body>
+        <div class="container">
+            <h1>User Information</h1>
+            <p>Please fill this form to make payment.</p>
+            <hr>
+            <b>First Name</b>
+            <input type="text" placeholder="Enter first name" name="firstname" id="firstName">
+            
+            <b>Last Name</b>
+            <input type="text" placeholder="Enter last name" name="lastName" id="lastName">
+            
+            <b>Email</b>
+            <input type="text" placeholder="Enter email" name="email" id="email">
+            
+            <b>Address</b>
+            <input type="text" placeholder="Enter address" name="address" id="address" >
+            
+            <b>Zip Code</b>
+            <input type="text" placeholder="Enter zipCode" name="zipCode" id="zipCode" >
+            
+             <b>Country Code (eg: US)</b>
+            <input type="text" placeholder="Enter countryCode" name="countryCode" id="countryCode">
+            
+            <b>City</b>
+            <input type="text" placeholder="Enter city" name="city" id="city" >
+            
+            <b>State Code (eg: CA)</b>
+            <input type="text" placeholder="Enter stateCode" name="stateCode" id="stateCode" >
+            
+            <b>Phone</b>
+            <input type="text" placeholder="Enter phone" name="phone" id="phone">
+            
+            <b>Amount to Pay</b>
+            <input type="text" placeholder="Enter amount" name="amount" id="amount">
+        
+            <hr>
+        
+            <button onclick="checkout()" class="registerbtn">Register</button>
+          </div>
+        
+    </body>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+
+    <script>
+        function checkout()
+        {
+            let firstName = document.getElementById('firstName').value
+            let lastName = document.getElementById('lastName').value
+            let email = document.getElementById('email').value
+            let address = document.getElementById('address').value
+            let zipCode = document.getElementById('zipCode').value
+            let countryCode = document.getElementById('countryCode').value
+            let city = document.getElementById('city').value
+            let stateCode = document.getElementById('stateCode').value
+            let phone = document.getElementById('phone').value
+            let amount = document.getElementById('amount').value
+
+        let userInfo = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    address: address,
+                    city: city,
+                    stateCode: stateCode,
+                    zipCode: zipCode,
+                    countryCode: countryCode,
+                    phone: phone,
+                    amount: amount
+        }
+
+        var xhttp;
+                xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        userInfo.singleUseCustomerToken = this.responseText
+                        performPayment(userInfo)
+                        // alert(this.responseText)
+                    }
+                };
+
+                // var params ={
+                //     "merchantId" : "1234565"
+                // }
+                xhttp.open("POST", '/createCustomer?merchantId='+userInfo.email+'&firstName='+userInfo.firstName+'&LastName='+userInfo.lastName+'&email='+userInfo.email+'&phone='+userInfo.phone, true);
+                xhttp.send();
+        }
+
+        function performPayment(userInfo)
+        {
+            let options = {
+                currency: GlobalConstants.currency,
+                amount: parseFloat(userInfo.amount) * 100,
+                locale: GlobalConstants.locale,
+                simulator: "EXTERNAL",
+                environment: GlobalConstants.environment,
+                buttonColor: "#66cc99",
+                companyName: GlobalConstants.companyName,
+                holderName: userInfo.firstName,
+                customer: {
+                    firstName: userInfo.firstName,
+                    lastName: userInfo.lastName,
+                    email: userInfo.email,
+                    phone: userInfo.phone
+                },
+                billingAddress: {
+                nickName: userInfo.name,
+                street: userInfo.address,
+                city: userInfo.city,
+                state: userInfo.stateCode,
+                zip: userInfo.zipCode,
+                country: userInfo.countryCode,
+                },
+                merchantRefNum: GlobalConstants.merchantRefNum, 
+                canEditAmount: false,
+                merchantDescriptor: GlobalConstants.merchantDescriptor,
+                displayPaymentMethods: GlobalConstants.paymentMethods,
+                singleUseCustomerToken:userInfo.singleUseCustomerToken,
+                paymentMethodDetails: {
+                    card: {
+                        
+                    }
+                }
+            }
+
+            paysafe.checkout.setup(GlobalConstants.apiKey,options,async function (instance, error, result) {
+            if (error) {
+                alert(error)
+            }
+
+            if (result != null && result.paymentHandleToken) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        // userInfo.singleUseCustomerToken = this.responseText
+                        // performPayment(userInfo)
+                        // alert(this.responseText)
+                        if(this.responseText === 'COMPLETED')
+                        {
+                            instance.showSuccessScreen("Your goods are now purchased. Expect them to be delivered in next 5 business days.");
+                        }
+
+                        else{
+                            instance.showFailureScreen("Some error occurred in payment. Please, try again later");
+                        }
+                    }
+                };
+
+                // var params ={
+                //     "merchantId" : "1234565"
+                // }
+                xhttp.open("POST", '/verifyPayment?amount='+result.amount+'&paymentHandleToken='+result.paymentHandleToken+'&currencyCode='+GlobalConstants.currency, true);
+                xhttp.send();
+            }
+
+            else 
+            {
+                instance.showFailureScreen("The payment was declined. Please, try again later");
+            }
+
+        }, function (stage, expired) {
+
+            switch (stage) {
+            case "PAYMENT_HANDLE_NOT_CREATED":
+            case "PAYMENT_HANDLE_CREATED":
+            case "PAYMENT_HANDLE_REDIRECT":
+            case "PAYMENT_HANDLE_PAYABLE":
+            default:
+            }
+
+        });
+        }
+
+
+class GlobalConstants {
+        static apiKey =     "cHVibGljLTc3NTE6Qi1xYTItMC01ZjAzMWNiZS0wLTMwMmQwMjE1MDA4OTBlZjI2MjI5NjU2M2FjY2QxY2I0YWFiNzkwMzIzZDJmZDU3MGQzMDIxNDUxMGJjZGFjZGFhNGYwM2Y1OTQ3N2VlZjEzZjJhZjVhZDEzZTMwNDQ="
+        static currency = "USD"
+        static locale = "en_US"
+        static environment = "TEST"
+        static companyName = "Paysafe Merchant"
+        static merchantRefNum = "1559900597607"
+        static merchantDescriptor = {
+            dynamicDescriptor: "XYZ",
+            phone: "1234567890"
+        }
+        static paymentMethods = ["card"]
+}
+    </script>   
+</html>
